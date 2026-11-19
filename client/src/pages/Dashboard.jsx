@@ -44,7 +44,7 @@ function Dashboard() {
       description:
         "Share your journey and help others travel more affordably.",
       icon: CarFront,
-      path: "/rides",
+      path: "/rides/create",
       color: "bg-violet-100 text-violet-600",
       available: true,
       action: "Create a ride",
@@ -52,12 +52,12 @@ function Dashboard() {
     {
       title: "Plan a Trip",
       description:
-        "Organize future journeys with your community.",
+        "Organize group journeys, discover travel companions and explore trips planned by your community.",
       icon: Map,
-      path: null,
+      path: "/trips",
       color: "bg-amber-100 text-amber-600",
-      available: false,
-      action: "Coming soon",
+      available: true,
+      action: "Explore trips",
     },
     {
       title: "Share a Cab",

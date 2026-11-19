@@ -1,6 +1,6 @@
 
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   Search,
   MapPin,
@@ -18,6 +18,7 @@ import {
 
 import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import LocationAutocomplete from "../components/LocationAutocomplete";
 
 const initialForm = {
   source: "",
@@ -76,6 +77,11 @@ function formatTime(time) {
 
 function RideFinder() {
   const { user } = useAuth();
+  const location = useLocation();
+
+  // Identify which page is currently open
+  const isOfferPage = location.pathname === "/rides/create";
+  const isFindPage = location.pathname === "/rides";
 
   const currentUserId = user?._id || user?.id;
 
@@ -120,16 +126,20 @@ function RideFinder() {
     } catch (err) {
       setRides([]);
       setError(
-        err.response?.data?.message || "Unable to load rides. Please try again."
+        err.response?.data?.message ||
+          "Unable to load rides. Please try again."
       );
     } finally {
       setLoading(false);
     }
   }, []);
 
+  // Fetch rides only on the Find a Ride page
   useEffect(() => {
-    fetchRides(initialFilters);
-  }, [fetchRides]);
+    if (isFindPage) {
+      fetchRides(initialFilters);
+    }
+  }, [fetchRides, isFindPage]);
 
   // ==========================================
   // FORM HANDLERS
@@ -168,8 +178,26 @@ function RideFinder() {
       setError("");
       setMessage("");
 
+      if (form.source.trim().toLowerCase() === form.destination.trim().toLowerCase()) {
+        setError("Starting location and destination cannot be the same.");
+        return;
+      }
+
+      if (!form.departureDate || !form.departureTime) {
+        setError("Please select a travel date and departure time.");
+        return;
+      }
+
       if (form.departureDate < today) {
         setError("Please select today or a future travel date.");
+        return;
+      }
+
+      if (
+        form.departureDate === today &&
+        form.departureTime <= new Date().toTimeString().slice(0, 5)
+      ) {
+        setError("Please select a future departure time.");
         return;
       }
 
@@ -182,13 +210,19 @@ function RideFinder() {
         return;
       }
 
-      if (Number(form.costPerSeat) < 0 || form.costPerSeat === "") {
+      if (
+        form.costPerSeat === "" ||
+        !Number.isFinite(Number(form.costPerSeat)) ||
+        Number(form.costPerSeat) < 0
+      ) {
         setError("Please enter a valid cost per seat.");
         return;
       }
 
       const payload = {
         ...form,
+        source: form.source.trim(),
+        destination: form.destination.trim(),
         totalSeats: Number(form.totalSeats),
         costPerSeat: Number(form.costPerSeat),
       };
@@ -197,11 +231,10 @@ function RideFinder() {
 
       setMessage("Your ride has been published successfully!");
       setForm(initialForm);
-
-      await fetchRides(filters);
     } catch (err) {
       setError(
-        err.response?.data?.message || "Unable to create ride. Please try again."
+        err.response?.data?.message ||
+          "Unable to create ride. Please try again."
       );
     } finally {
       setCreating(false);
@@ -396,12 +429,13 @@ function RideFinder() {
           </div>
 
           <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-            MoveMate Ride Finder
+            {isOfferPage ? "Offer a Ride" : "MoveMate Ride Finder"}
           </h1>
 
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">
-            Travel together, share costs and connect with people
-            travelling your way.
+            {isOfferPage
+              ? "Share your journey, offer available seats and connect with your community."
+              : "Travel together, share costs and connect with people travelling your way."}
           </p>
         </div>
 
@@ -426,13 +460,12 @@ function RideFinder() {
           </div>
         )}
 
-        <div className="grid items-start gap-8 lg:grid-cols-[0.85fr_1.15fr]">
+        {/* ======================================
+            OFFER A RIDE PAGE
+        ====================================== */}
 
-          {/* ======================================
-              CREATE RIDE
-          ====================================== */}
-
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+        {isOfferPage && (
+          <section className="mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
             <div className="mb-6 flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
                 <PlusCircle size={22} />
@@ -449,7 +482,6 @@ function RideFinder() {
             </div>
 
             <form onSubmit={handleCreateRide} className="space-y-5">
-
               <div>
                 <label
                   htmlFor="source"
@@ -458,15 +490,21 @@ function RideFinder() {
                   Starting location
                 </label>
 
-                <input
+                <LocationAutocomplete
                   id="source"
-                  name="source"
                   value={form.source}
-                  onChange={handleFormChange}
-                  placeholder="e.g. Agra"
+                  onChange={(value) => {
+                    setForm((previous) => ({
+                      ...previous,
+                      source: value,
+                    }));
+                    setError("");
+                    setMessage("");
+                  }}
+                  placeholder="e.g. KIET, Ghaziabad"
                   required
                   maxLength={100}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                 />
               </div>
 
@@ -478,15 +516,21 @@ function RideFinder() {
                   Destination
                 </label>
 
-                <input
+                <LocationAutocomplete
                   id="destination"
-                  name="destination"
                   value={form.destination}
-                  onChange={handleFormChange}
+                  onChange={(value) => {
+                    setForm((previous) => ({
+                      ...previous,
+                      destination: value,
+                    }));
+                    setError("");
+                    setMessage("");
+                  }}
                   placeholder="e.g. New Delhi"
                   required
                   maxLength={100}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                 />
               </div>
 
@@ -623,13 +667,14 @@ function RideFinder() {
               </button>
             </form>
           </section>
+        )}
 
-          {/* ======================================
-              SEARCH AND RIDE RESULTS
-          ====================================== */}
+        {/* ======================================
+            FIND A RIDE PAGE
+        ====================================== */}
 
+        {isFindPage && (
           <section className="min-w-0">
-
             {/* Search form */}
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
               <div className="mb-6 flex items-center gap-3">
@@ -648,7 +693,6 @@ function RideFinder() {
               </div>
 
               <form onSubmit={handleSearch} className="space-y-4">
-
                 <div>
                   <label
                     htmlFor="filterSource"
@@ -657,13 +701,19 @@ function RideFinder() {
                     From
                   </label>
 
-                  <input
+                  <LocationAutocomplete
                     id="filterSource"
-                    name="source"
                     value={filters.source}
-                    onChange={handleFilterChange}
+                    onChange={(value) => {
+                      setFilters((previous) => ({
+                        ...previous,
+                        source: value,
+                      }));
+                      setError("");
+                    }}
                     placeholder="Enter starting location"
-                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    maxLength={100}
+                    className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   />
                 </div>
 
@@ -675,13 +725,19 @@ function RideFinder() {
                     To
                   </label>
 
-                  <input
+                  <LocationAutocomplete
                     id="filterDestination"
-                    name="destination"
                     value={filters.destination}
-                    onChange={handleFilterChange}
+                    onChange={(value) => {
+                      setFilters((previous) => ({
+                        ...previous,
+                        destination: value,
+                      }));
+                      setError("");
+                    }}
                     placeholder="Enter destination"
-                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    maxLength={100}
+                    className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   />
                 </div>
 
@@ -788,10 +844,18 @@ function RideFinder() {
                   Try changing your filters or offer a ride yourself.
                 </p>
 
+                <Link
+                  to="/rides/create"
+                  className="mt-5 inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                >
+                  <PlusCircle size={16} />
+                  Offer a Ride
+                </Link>
+
                 <button
                   type="button"
                   onClick={handleClearFilters}
-                  className="mt-5 inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                  className="mt-3 flex w-full items-center justify-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900"
                 >
                   <X size={16} />
                   Clear filters
@@ -805,9 +869,8 @@ function RideFinder() {
                 {rides.map((ride) => renderRideCard(ride))}
               </div>
             )}
-
           </section>
-        </div>
+        )}
       </div>
     </div>
   );

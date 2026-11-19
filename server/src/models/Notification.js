@@ -3,7 +3,6 @@ import mongoose from "mongoose";
 
 const notificationSchema = new mongoose.Schema(
   {
-    // User who receives the notification
     recipient: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -11,14 +10,12 @@ const notificationSchema = new mongoose.Schema(
       index: true,
     },
 
-    // User who triggered the notification
     sender: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       default: null,
     },
 
-    // Notification category
     type: {
       type: String,
       required: true,
@@ -38,10 +35,17 @@ const notificationSchema = new mongoose.Schema(
         "cab_share_withdrawn",
         "cab_share_cancelled",
         "cab_share_completed",
+
+        // Plan a Trip notifications
+        "trip_request",
+        "trip_accepted",
+        "trip_rejected",
+        "trip_withdrawn",
+        "trip_cancelled",
+        "trip_completed",
       ],
     },
 
-    // Short notification heading
     title: {
       type: String,
       required: true,
@@ -49,7 +53,6 @@ const notificationSchema = new mongoose.Schema(
       maxlength: 100,
     },
 
-    // Notification details
     message: {
       type: String,
       required: true,
@@ -57,34 +60,36 @@ const notificationSchema = new mongoose.Schema(
       maxlength: 300,
     },
 
-    // Related exchange request
     relatedExchange: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "ExchangeRequest",
       default: null,
     },
 
-    // Related Cab Share post
     cabShareId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "CabShare",
       default: null,
     },
 
-    // Related request subdocument inside CabShare.requests
+    // Used by Cab Share and Trip request notifications
     requestId: {
       type: mongoose.Schema.Types.ObjectId,
       default: null,
     },
 
-    // Read/unread state
+    tripId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Trip",
+      default: null,
+    },
+
     isRead: {
       type: Boolean,
       default: false,
       index: true,
     },
 
-    // Time when notification was read
     readAt: {
       type: Date,
       default: null,
@@ -95,13 +100,11 @@ const notificationSchema = new mongoose.Schema(
   }
 );
 
-// Efficiently retrieve a user's notifications
 notificationSchema.index({
   recipient: 1,
   createdAt: -1,
 });
 
-// Efficiently retrieve unread notifications
 notificationSchema.index({
   recipient: 1,
   isRead: 1,

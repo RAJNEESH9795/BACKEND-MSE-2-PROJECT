@@ -10,13 +10,14 @@ export const sendNotificationSafely = async ({
   relatedExchange = null,
   cabShareId = null,
   requestId = null,
+  tripId = null,
 }) => {
   try {
     if (!recipient) {
       return null;
     }
 
-    const notification = await Notification.create({
+    return await Notification.create({
       recipient,
       sender,
       type,
@@ -25,16 +26,10 @@ export const sendNotificationSafely = async ({
       relatedExchange,
       cabShareId,
       requestId,
+      tripId,
     });
-
-    return notification;
   } catch (error) {
-    console.error(
-      "Notification creation failed:",
-      error
-    );
-
-    // Notifications should not break the main operation
+    console.error("Notification creation failed:", error);
     return null;
   }
 };

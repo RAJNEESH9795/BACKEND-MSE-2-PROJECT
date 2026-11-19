@@ -35,6 +35,10 @@ function MyServices() {
   const [actionMessage, setActionMessage] = useState("");
   const [processingId, setProcessingId] = useState("");
 
+  // ==========================================
+  // FETCH MY SERVICES
+  // ==========================================
+
   const fetchServices = useCallback(async () => {
     try {
       setLoading(true);
@@ -60,6 +64,10 @@ function MyServices() {
   useEffect(() => {
     fetchServices();
   }, [fetchServices]);
+
+  // ==========================================
+  // CHANGE SERVICE STATUS
+  // ==========================================
 
   const handleStatusChange = async (service) => {
     const nextStatus =
@@ -90,7 +98,10 @@ function MyServices() {
         return;
       }
 
-      setActionMessage(response.message || "Service status updated.");
+      setActionMessage(
+        response.message || "Service status updated."
+      );
+
       await fetchServices();
     } catch (err) {
       setActionError(
@@ -102,10 +113,15 @@ function MyServices() {
     }
   };
 
+  // ==========================================
+  // PAGE UI
+  // ==========================================
+
   return (
     <div className="min-h-screen bg-slate-100 px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
 
+        {/* Back to Marketplace */}
         <Link
           to="/marketplace"
           className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-slate-600 transition hover:text-emerald-600"
@@ -114,6 +130,7 @@ function MyServices() {
           Back to Marketplace
         </Link>
 
+        {/* Page Heading */}
         <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
             <div className="mb-2 flex items-center gap-3">
@@ -131,8 +148,9 @@ function MyServices() {
             </p>
           </div>
 
+          {/* FIXED: Correct Create Service Route */}
           <Link
-            to="/marketplace/create"
+            to="/services/create"
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
           >
             <Plus size={18} />
@@ -140,6 +158,7 @@ function MyServices() {
           </Link>
         </div>
 
+        {/* Success Message */}
         {actionMessage && (
           <div
             role="status"
@@ -149,6 +168,7 @@ function MyServices() {
           </div>
         )}
 
+        {/* Action Error */}
         {actionError && (
           <div
             role="alert"
@@ -158,18 +178,33 @@ function MyServices() {
           </div>
         )}
 
+        {/* ======================================
+            LOADING STATE
+        ====================================== */}
+
         {loading ? (
           <div className="flex min-h-64 items-center justify-center gap-3 text-slate-600">
             <LoaderCircle size={24} className="animate-spin" />
             Loading your services...
           </div>
         ) : error ? (
-          <div className="rounded-xl border border-red-200 bg-white p-8 text-center">
-            <AlertCircle size={32} className="mx-auto mb-3 text-red-500" />
 
-            <p className="mb-4 text-sm text-red-700">{error}</p>
+          /* ======================================
+             ERROR STATE
+          ====================================== */
+
+          <div className="rounded-xl border border-red-200 bg-white p-8 text-center">
+            <AlertCircle
+              size={32}
+              className="mx-auto mb-3 text-red-500"
+            />
+
+            <p className="mb-4 text-sm text-red-700">
+              {error}
+            </p>
 
             <button
+              type="button"
               onClick={fetchServices}
               className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
             >
@@ -178,6 +213,11 @@ function MyServices() {
             </button>
           </div>
         ) : services.length === 0 ? (
+
+          /* ======================================
+             EMPTY STATE
+          ====================================== */
+
           <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
             <Handshake
               size={42}
@@ -193,8 +233,9 @@ function MyServices() {
               who can exchange a service with you.
             </p>
 
+            {/* FIXED: Correct Create Service Route */}
             <Link
-              to="/marketplace/create"
+              to="/services/create"
               className="mt-6 inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-700"
             >
               <Plus size={17} />
@@ -202,13 +243,20 @@ function MyServices() {
             </Link>
           </div>
         ) : (
+
+          /* ======================================
+             SERVICE LIST
+          ====================================== */
+
           <>
             <div className="mb-5 flex items-center justify-between">
               <p className="text-sm font-medium text-slate-600">
-                {services.length} {services.length === 1 ? "listing" : "listings"} found
+                {services.length}{" "}
+                {services.length === 1 ? "listing" : "listings"} found
               </p>
 
               <button
+                type="button"
                 onClick={fetchServices}
                 className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 hover:text-emerald-800"
               >
@@ -225,6 +273,7 @@ function MyServices() {
                 >
                   <div className="p-5 sm:p-6">
 
+                    {/* Category and Status */}
                     <div className="mb-4 flex items-start justify-between gap-3">
                       <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold capitalize text-slate-600">
                         {service.category}
@@ -240,51 +289,72 @@ function MyServices() {
                       </span>
                     </div>
 
+                    {/* Service Title */}
                     <h2 className="text-lg font-bold text-slate-900">
                       {service.title}
                     </h2>
 
+                    {/* Description */}
                     <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">
                       {service.description}
                     </p>
 
+                    {/* Service Details */}
                     <div className="mt-4 space-y-2 border-t border-slate-100 pt-4">
                       <div className="flex items-start gap-2 text-sm text-slate-600">
-                        <Handshake size={16} className="mt-0.5 shrink-0 text-emerald-600" />
+                        <Handshake
+                          size={16}
+                          className="mt-0.5 shrink-0 text-emerald-600"
+                        />
+
                         <span>
                           <strong>Seeking:</strong> {service.seeking}
                         </span>
                       </div>
 
                       <div className="flex items-center gap-2 text-sm text-slate-600">
-                        <Clock size={16} className="shrink-0 text-emerald-600" />
+                        <Clock
+                          size={16}
+                          className="shrink-0 text-emerald-600"
+                        />
+
                         <span>{service.availability}</span>
                       </div>
 
                       <div className="flex items-center gap-2 text-sm text-slate-600">
-                        <MapPin size={16} className="shrink-0 text-emerald-600" />
+                        <MapPin
+                          size={16}
+                          className="shrink-0 text-emerald-600"
+                        />
+
                         <span className="capitalize">
                           {service.mode === "both"
                             ? "Online and in-person"
                             : service.mode}
-                          {service.location ? ` · ${service.location}` : ""}
+                          {service.location
+                            ? ` · ${service.location}`
+                            : ""}
                         </span>
                       </div>
                     </div>
 
+                    {/* Service Actions */}
                     <div className="mt-6 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
 
                       {service.status !== "closed" ? (
                         <>
+                          {/* FIXED: Correct Edit Service Route */}
                           <Link
-                            to={`/my-services/${service._id}/edit`}
+                            to={`/edit-service/${service._id}`}
                             className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                           >
                             <Pencil size={15} />
                             Edit
                           </Link>
 
+                          {/* Pause / Activate */}
                           <button
+                            type="button"
                             onClick={() => handleStatusChange(service)}
                             disabled={processingId === service._id}
                             className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
@@ -294,14 +364,19 @@ function MyServices() {
                             }`}
                           >
                             {processingId === service._id ? (
-                              <LoaderCircle size={15} className="animate-spin" />
+                              <LoaderCircle
+                                size={15}
+                                className="animate-spin"
+                              />
                             ) : service.status === "active" ? (
                               <PauseCircle size={15} />
                             ) : (
                               <PlayCircle size={15} />
                             )}
 
-                            {service.status === "active" ? "Pause" : "Activate"}
+                            {service.status === "active"
+                              ? "Pause"
+                              : "Activate"}
                           </button>
                         </>
                       ) : (
@@ -310,8 +385,9 @@ function MyServices() {
                         </span>
                       )}
 
+                      {/* FIXED: Correct View Service Route */}
                       <Link
-                        to={`/marketplace/${service._id}`}
+                        to={`/services/${service._id}`}
                         className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                       >
                         <Eye size={15} />

@@ -13,6 +13,7 @@ import serviceRoutes from "./routes/serviceRoutes.js";
 import exchangeRoutes from "./routes/exchangeRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import cabShareRoutes from "./routes/cabShareRoutes.js";
+import tripRoutes from "./routes/tripRoutes.js";
 
 const app = express();
 
@@ -83,8 +84,11 @@ app.use("/api/v1/services", serviceRoutes);
 app.use("/api/v1/exchanges", exchangeRoutes);
 app.use("/api/v1/notifications", notificationRoutes);
 
-// NEW: CAB-SHARING ROUTES
+// Cab Share routes
 app.use("/api/v1/cab-shares", cabShareRoutes);
+
+// Plan a Trip routes
+app.use("/api/v1/trips", tripRoutes);
 
 // ==========================================
 // 7. UNKNOWN ROUTE HANDLER

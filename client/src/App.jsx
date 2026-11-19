@@ -1,28 +1,40 @@
 
 import { Routes, Route, Navigate } from "react-router-dom";
 
-// Existing pages
-import Home from "./pages/Home";
+import ProtectedRoute from "./components/ProtectedRoute";
+import AppLayout from "./components/AppLayout";
+
+// Authentication pages
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+
+// Main pages
 import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
+import ChangePassword from "./pages/ChangePassword";
+
+// Ride sharing pages
 import RideFinder from "./pages/RideFinder";
 import RideDetails from "./pages/RideDetails";
 import MyBookings from "./pages/MyBookings";
 import ManageBookings from "./pages/ManageBookings";
 import MyRides from "./pages/MyRides";
 import EditRide from "./pages/EditRide";
-import Profile from "./pages/Profile";
-import ChangePassword from "./pages/ChangePassword";
+
+// Marketplace pages
 import Marketplace from "./pages/Marketplace";
 import CreateService from "./pages/CreateService";
 import ServiceDetails from "./pages/ServiceDetails";
 import MyServices from "./pages/MyServices";
 import EditService from "./pages/EditService";
+
+// Exchange pages
 import MyExchangeRequests from "./pages/MyExchangeRequests";
 import ReceivedExchangeRequests from "./pages/ReceivedExchangeRequests";
+
+// Notifications
 import Notifications from "./pages/Notifications";
 
 // Cab Share pages
@@ -30,49 +42,23 @@ import CreateCabShare from "./pages/CreateCabShare";
 import FindCabShares from "./pages/FindCabShares";
 import MyCabShares from "./pages/MyCabShares";
 
-// Components and context
-import ProtectedRoute from "./components/ProtectedRoute";
-import AppLayout from "./components/AppLayout";
-import { useAuth } from "./context/AuthContext";
+// Plan a Trip pages
+import CreateTrip from "./pages/CreateTrip";
+import FindTrips from "./pages/FindTrips";
+import MyTrips from "./pages/MyTrips";
 
 function App() {
-  const { isAuthenticated } = useAuth();
-
   return (
     <Routes>
-      {/* Public routes */}
+      {/* Default route */}
       <Route
         path="/"
-        element={
-          isAuthenticated ? (
-            <Navigate to="/dashboard" replace />
-          ) : (
-            <Home />
-          )
-        }
+        element={<Navigate to="/dashboard" replace />}
       />
 
-      <Route
-        path="/login"
-        element={
-          isAuthenticated ? (
-            <Navigate to="/dashboard" replace />
-          ) : (
-            <Login />
-          )
-        }
-      />
-
-      <Route
-        path="/register"
-        element={
-          isAuthenticated ? (
-            <Navigate to="/dashboard" replace />
-          ) : (
-            <Register />
-          )
-        }
-      />
+      {/* Public authentication routes */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
 
       <Route
         path="/forgot-password"
@@ -84,121 +70,166 @@ function App() {
         element={<ResetPassword />}
       />
 
-      {/* Protected routes */}
-      <Route element={<ProtectedRoute />}>
-        <Route element={<AppLayout />}>
-          {/* Dashboard and notifications */}
-          <Route
-            path="/dashboard"
-            element={<Dashboard />}
-          />
+      {/* Protected application routes */}
+      <Route
+        element={
+          <ProtectedRoute>
+            <AppLayout />
+          </ProtectedRoute>
+        }
+      >
+        {/* Dashboard and profile */}
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/profile" element={<Profile />} />
 
-          <Route
-            path="/notifications"
-            element={<Notifications />}
-          />
+        <Route
+          path="/change-password"
+          element={<ChangePassword />}
+        />
 
-          {/* Ride sharing */}
-          <Route
-            path="/rides"
-            element={<RideFinder />}
-          />
+        {/* Ride sharing */}
 
-          <Route
-            path="/rides/:id"
-            element={<RideDetails />}
-          />
+        {/* Find a Ride - only search and available rides */}
+        <Route
+          path="/rides"
+          element={<RideFinder />}
+        />
 
-          <Route
-            path="/rides/:id/edit"
-            element={<EditRide />}
-          />
+        {/* Offer a Ride - only ride creation form */}
+        <Route
+          path="/rides/create"
+          element={<RideFinder />}
+        />
 
-          <Route
-            path="/my-rides"
-            element={<MyRides />}
-          />
+        {/* Ride details */}
+        <Route
+          path="/rides/:id"
+          element={<RideDetails />}
+        />
 
-          <Route
-            path="/my-bookings"
-            element={<MyBookings />}
-          />
+        <Route
+          path="/my-bookings"
+          element={<MyBookings />}
+        />
 
-          <Route
-            path="/manage-bookings/:rideId"
-            element={<ManageBookings />}
-          />
+        <Route
+          path="/manage-bookings/:id"
+          element={<ManageBookings />}
+        />
 
-          {/* Cab Share */}
-          <Route
-            path="/cab-shares"
-            element={<FindCabShares />}
-          />
+        <Route
+          path="/my-rides"
+          element={<MyRides />}
+        />
 
-          <Route
-            path="/cab-shares/create"
-            element={<CreateCabShare />}
-          />
+        <Route
+          path="/edit-ride/:id"
+          element={<EditRide />}
+        />
 
-          <Route
-            path="/my-cab-shares"
-            element={<MyCabShares />}
-          />
+        {/* Marketplace */}
+        <Route
+          path="/marketplace"
+          element={<Marketplace />}
+        />
 
-          {/* User profile */}
-          <Route
-            path="/profile"
-            element={<Profile />}
-          />
+        <Route
+          path="/services/create"
+          element={<CreateService />}
+        />
 
-          <Route
-            path="/change-password"
-            element={<ChangePassword />}
-          />
+        <Route
+          path="/services/:id"
+          element={<ServiceDetails />}
+        />
 
-          {/* Marketplace */}
-          <Route
-            path="/marketplace"
-            element={<Marketplace />}
-          />
+        <Route
+          path="/my-services"
+          element={<MyServices />}
+        />
 
-          <Route
-            path="/marketplace/create"
-            element={<CreateService />}
-          />
+        <Route
+          path="/edit-service/:id"
+          element={<EditService />}
+        />
 
-          <Route
-            path="/marketplace/:id"
-            element={<ServiceDetails />}
-          />
+        {/* Exchange requests */}
+        <Route
+          path="/my-exchange-requests"
+          element={<MyExchangeRequests />}
+        />
 
-          <Route
-            path="/my-services"
-            element={<MyServices />}
-          />
+        <Route
+          path="/received-exchange-requests"
+          element={<ReceivedExchangeRequests />}
+        />
 
-          <Route
-            path="/my-services/:id/edit"
-            element={<EditService />}
-          />
+        {/* Notifications */}
+        <Route
+          path="/notifications"
+          element={<Notifications />}
+        />
 
-          {/* Exchange requests */}
-          <Route
-            path="/my-exchange-requests"
-            element={<MyExchangeRequests />}
-          />
+        {/* Cab Share */}
+        <Route
+          path="/cab-shares"
+          element={<FindCabShares />}
+        />
 
-          <Route
-            path="/received-exchange-requests"
-            element={<ReceivedExchangeRequests />}
-          />
-        </Route>
+        <Route
+          path="/cab-shares/create"
+          element={<CreateCabShare />}
+        />
+
+        <Route
+          path="/my-cab-shares"
+          element={<MyCabShares />}
+        />
+
+        {/* Plan a Trip */}
+        <Route
+          path="/trips"
+          element={<FindTrips />}
+        />
+
+        <Route
+          path="/trips/create"
+          element={<CreateTrip />}
+        />
+
+        <Route
+          path="/my-trips"
+          element={<MyTrips />}
+        />
       </Route>
 
-      {/* Fallback route */}
+      {/* 404 fallback */}
       <Route
         path="*"
-        element={<Navigate to="/" replace />}
+        element={
+          <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4">
+            <div className="text-center">
+              <h1 className="text-6xl font-extrabold text-emerald-600">
+                404
+              </h1>
+
+              <p className="mt-3 text-lg font-semibold text-slate-800">
+                Page not found
+              </p>
+
+              <p className="mt-1 text-sm text-slate-500">
+                The page you are looking for does not exist.
+              </p>
+
+              <a
+                href="/dashboard"
+                className="mt-6 inline-block rounded-lg bg-emerald-600 px-5 py-2.5 font-semibold text-white hover:bg-emerald-700"
+              >
+                Go to Dashboard
+              </a>
+            </div>
+          </div>
+        }
       />
     </Routes>
   );
