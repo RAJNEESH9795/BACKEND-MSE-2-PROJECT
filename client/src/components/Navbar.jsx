@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
+
 import {
   Menu,
   X,
@@ -12,9 +13,16 @@ import {
   UserCircle,
   UserRound,
   Car,
+  Handshake,
+  Inbox,
+  BriefcaseBusiness,
+  Bell,
+  Users,
+  PlusCircle,
 } from "lucide-react";
 
 import { useAuth } from "../context/AuthContext";
+import { getUnreadNotificationCount } from "../services/notificationService";
 
 function Navbar() {
   const { user, logout } = useAuth();
@@ -22,18 +30,70 @@ function Navbar() {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  // Reset image error when profile photo changes.
+  // Notification unread count synchronization
+  useEffect(() => {
+    let isMounted = true;
+
+    if (!user) {
+      setUnreadCount(0);
+      return;
+    }
+
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await getUnreadNotificationCount();
+
+        if (isMounted && response.success) {
+          setUnreadCount(
+            response.count ?? response.unreadCount ?? 0
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Unable to fetch unread notification count:",
+          error
+        );
+      }
+    };
+
+    fetchUnreadCount();
+
+    window.addEventListener(
+      "notifications-updated",
+      fetchUnreadCount
+    );
+
+    const intervalId = setInterval(
+      fetchUnreadCount,
+      30000
+    );
+
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+
+      window.removeEventListener(
+        "notifications-updated",
+        fetchUnreadCount
+      );
+    };
+  }, [user]);
+
+  // Reset image error when profile photo changes
   useEffect(() => {
     setImageError(false);
   }, [user?.profilePhoto]);
 
+  // Logout handler
   const handleLogout = () => {
     logout();
     setMobileMenuOpen(false);
     navigate("/login", { replace: true });
   };
 
+  // Navigation links
   const navLinks = [
     {
       name: "Dashboard",
@@ -55,13 +115,47 @@ function Navbar() {
       path: "/my-rides",
       icon: Car,
     },
+
+    // Cab Share navigation
+    {
+      name: "Find Cab Shares",
+      path: "/cab-shares",
+      icon: Users,
+    },
+    {
+      name: "Create Cab Share",
+      path: "/cab-shares/create",
+      icon: PlusCircle,
+    },
+    {
+      name: "My Cab Shares",
+      path: "/my-cab-shares",
+      icon: CarFront,
+    },
+
+    {
+      name: "My Exchanges",
+      path: "/my-exchange-requests",
+      icon: Handshake,
+    },
+    {
+      name: "Received Requests",
+      path: "/received-exchange-requests",
+      icon: Inbox,
+    },
     {
       name: "My Profile",
       path: "/profile",
       icon: UserRound,
     },
+    {
+      name: "My Services",
+      path: "/my-services",
+      icon: BriefcaseBusiness,
+    },
   ];
 
+  // Navigation link styling
   const linkClass = ({ isActive }) =>
     `flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition ${
       isActive
@@ -69,7 +163,7 @@ function Navbar() {
         : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
     }`;
 
-  // Reusable profile image
+  // Reusable profile avatar
   const ProfileAvatar = ({ size = "h-9 w-9" }) => (
     <div
       className={`${size} flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100`}
@@ -85,6 +179,31 @@ function Navbar() {
         <UserCircle className="text-slate-500" size={22} />
       )}
     </div>
+  );
+
+  // Reusable notification bell
+  const NotificationBell = () => (
+    <NavLink
+      to="/notifications"
+      onClick={() => setMobileMenuOpen(false)}
+      aria-label={`Notifications, ${unreadCount} unread`}
+      title="Notifications"
+      className={({ isActive }) =>
+        `relative flex h-10 w-10 items-center justify-center rounded-lg transition ${
+          isActive
+            ? "bg-emerald-50 text-emerald-700"
+            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+        }`
+      }
+    >
+      <Bell size={21} />
+
+      {unreadCount > 0 && (
+        <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
+          {unreadCount > 99 ? "99+" : unreadCount}
+        </span>
+      )}
+    </NavLink>
   );
 
   return (
@@ -130,6 +249,11 @@ function Navbar() {
           })}
         </div>
 
+        {/* Desktop Notifications */}
+        <div className="hidden md:block">
+          <NotificationBell />
+        </div>
+
         {/* Desktop User and Logout */}
         <div className="hidden items-center gap-3 md:flex">
           <div className="flex items-center gap-2">
@@ -157,11 +281,10 @@ function Navbar() {
 
         {/* Mobile Profile Avatar and Menu Button */}
         <div className="flex items-center gap-3 md:hidden">
+          <NotificationBell />
 
-          {/* Profile Photo */}
           <ProfileAvatar size="h-9 w-9" />
 
-          {/* Hamburger Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="rounded-lg p-2 text-slate-700 hover:bg-slate-100"

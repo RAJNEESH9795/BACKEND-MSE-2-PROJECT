@@ -2,6 +2,19 @@
 import mongoose from "mongoose";
 import ExchangeRequest from "../models/ExchangeRequest.js";
 import ServiceListing from "../models/ServiceListing.js";
+import createNotification from "../services/notificationService.js";
+
+// ==========================================
+// HELPER: CREATE NOTIFICATION SAFELY
+// ==========================================
+
+const sendNotificationSafely = async (notificationData) => {
+  try {
+    await createNotification(notificationData);
+  } catch (error) {
+    console.error("Notification creation failed:", error);
+  }
+};
 
 // ==========================================
 // 1. CREATE AN EXCHANGE REQUEST
@@ -108,6 +121,17 @@ export const createExchangeRequest = async (req, res) => {
       requestedListing: requestedListing._id,
       offeredListing: offeredListing._id,
       message: message?.trim() || "",
+    });
+
+    // Notify the service provider.
+    await sendNotificationSafely({
+      recipient: requestedListing.offeredBy,
+      sender: requesterId,
+      type: "exchange_request",
+      title: "New Exchange Request",
+      message:
+        "Someone has requested your service. Open Received Requests to review it.",
+      relatedExchange: exchangeRequest._id,
     });
 
     return res.status(201).json({
@@ -249,6 +273,25 @@ export const updateExchangeRequestStatus = async (req, res) => {
       });
     }
 
+    // Notify the requester.
+    await sendNotificationSafely({
+      recipient: updatedRequest.requester,
+      sender: req.user.userId,
+      type:
+        status === "accepted"
+          ? "exchange_accepted"
+          : "exchange_rejected",
+      title:
+        status === "accepted"
+          ? "Exchange Request Accepted"
+          : "Exchange Request Rejected",
+      message:
+        status === "accepted"
+          ? "Your exchange request has been accepted. You can now coordinate your service exchange."
+          : "Your exchange request was rejected.",
+      relatedExchange: updatedRequest._id,
+    });
+
     return res.status(200).json({
       success: true,
       message: `Exchange request ${status} successfully`,
@@ -300,6 +343,16 @@ export const cancelExchangeRequest = async (req, res) => {
       });
     }
 
+    // Notify the provider.
+    await sendNotificationSafely({
+      recipient: updatedRequest.provider,
+      sender: req.user.userId,
+      type: "exchange_cancelled",
+      title: "Exchange Request Cancelled",
+      message: "The requester has cancelled their exchange request.",
+      relatedExchange: updatedRequest._id,
+    });
+
     return res.status(200).json({
       success: true,
       message: "Exchange request cancelled successfully",
@@ -318,7 +371,6 @@ export const cancelExchangeRequest = async (req, res) => {
 // ==========================================
 // 6. CONFIRM SERVICE COMPLETION
 // ==========================================
-
 
 export const confirmExchangeCompletion = async (req, res) => {
   try {
@@ -407,6 +459,47 @@ export const confirmExchangeCompletion = async (req, res) => {
         success: false,
         message:
           "You have already confirmed completion or the exchange has changed",
+      });
+    }
+
+    if (updatedRequest.status === "completed") {
+      // Both participants have confirmed completion.
+      await Promise.all([
+        sendNotificationSafely({
+          recipient: updatedRequest.requester,
+          sender: userId,
+          type: "exchange_completed",
+          title: "Exchange Completed",
+          message:
+            "Both participants have confirmed completion of the service exchange.",
+          relatedExchange: updatedRequest._id,
+        }),
+
+        sendNotificationSafely({
+          recipient: updatedRequest.provider,
+          sender: userId,
+          type: "exchange_completed",
+          title: "Exchange Completed",
+          message:
+            "Both participants have confirmed completion of the service exchange.",
+          relatedExchange: updatedRequest._id,
+        }),
+      ]);
+    } else {
+      // The first participant confirmed.
+      // Notify the other participant.
+      const otherParticipant = isRequester
+        ? updatedRequest.provider
+        : updatedRequest.requester;
+
+      await sendNotificationSafely({
+        recipient: otherParticipant,
+        sender: userId,
+        type: "exchange_completion_pending",
+        title: "Completion Confirmation Received",
+        message:
+          "The other participant has confirmed completion. Please confirm your side to complete the exchange.",
+        relatedExchange: updatedRequest._id,
       });
     }
 

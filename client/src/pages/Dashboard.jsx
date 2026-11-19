@@ -1,5 +1,6 @@
 
 import { Link } from "react-router-dom";
+
 import {
   Search,
   CalendarCheck,
@@ -9,6 +10,7 @@ import {
   ArrowRight,
   UserRound,
   Users,
+  BriefcaseBusiness,
 } from "lucide-react";
 
 import { useAuth } from "../context/AuthContext";
@@ -62,24 +64,35 @@ function Dashboard() {
       description:
         "Find people to share cab journeys and travel costs.",
       icon: Users,
-      path: null,
+      path: "/cab-shares",
       color: "bg-cyan-100 text-cyan-600",
-      available: false,
-      action: "Coming soon",
+      available: true,
+      action: "Find cab shares",
     },
     {
       title: "Barter Marketplace",
       description:
         "Exchange useful services and skills within your community.",
       icon: Handshake,
-      path: null,
+      path: "/marketplace",
       color: "bg-pink-100 text-pink-600",
-      available: false,
-      action: "Coming soon",
+      available: true,
+      action: "Explore marketplace",
+    },
+    {
+      title: "My Services",
+      description:
+        "View, edit and manage the services you offer to your community.",
+      icon: BriefcaseBusiness,
+      path: "/my-services",
+      color: "bg-emerald-100 text-emerald-600",
+      available: true,
+      action: "Manage my services",
     },
     {
       title: "My Rides",
-      description: "View, edit and manage the rides you have offered.",
+      description:
+        "View, edit and manage the rides you have offered.",
       icon: CarFront,
       path: "/my-rides",
       color: "bg-violet-100 text-violet-600",
@@ -135,6 +148,7 @@ function Dashboard() {
               <p className="text-sm text-slate-500">
                 Logged in as
               </p>
+
               <p className="font-bold text-slate-900">
                 {user?.name || "MoveMate User"}
               </p>
@@ -150,6 +164,7 @@ function Dashboard() {
               <p className="text-sm text-slate-500">
                 Community
               </p>
+
               <p className="font-bold text-slate-900">
                 {user?.community || "Community member"}
               </p>
@@ -196,11 +211,13 @@ function Dashboard() {
                     {feature.description}
                   </p>
 
-                  <div className={`mt-5 flex items-center gap-2 text-sm font-semibold ${
-                    feature.available
-                      ? "text-emerald-600"
-                      : "text-slate-400"
-                  }`}>
+                  <div
+                    className={`mt-5 flex items-center gap-2 text-sm font-semibold ${
+                      feature.available
+                        ? "text-emerald-600"
+                        : "text-slate-400"
+                    }`}
+                  >
                     {feature.action}
 
                     {feature.available && (
